@@ -1,0 +1,64 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+
+<body>
+<h1>AI Expression Tracking</h1>
+<p>Connects to VTS POG's API to grab message and then sends mood to Warudo.</p>
+<button onclick="testHappy()">Test Happy</button>
+<button onclick="testNeutral()">Test Neutral</button>
+<button onclick="testSad()">Test Sad</button>
+
+<script>
+	var url = "ws://localhost:3800/api";
+	var webSocket;
+	
+	var warudoUrl = "ws://localhost:19190";
+	var warudoSocket;
+
+	function connect() {
+		webSocket = new WebSocket(url);
+		webSocket.onopen = (event) => {
+			console.log("connected");
+			webSocket.send(JSON.stringify({type:"client",data:"asdasda"}));
+		};
+		webSocket.onclose = (event) => {
+			console.log("close");
+			setTimeout(connect,1000);
+		};
+		
+		webSocket.onmessage = (event) => {
+			console.log(event.data);
+			var message=JSON.parse(event.data);
+			if (message.type === "startTTS"){
+				var happyness = message.data.happynes*10;
+				console.log(happyness);
+				warudoSocket.send(JSON.stringify({action:"AIExpressions",data:happyness}));
+			}
+		};
+		
+		warudoSocket = new WebSocket(warudoUrl);
+		warudoSocket.onopen = (event) => {
+			console.log("connected to warudo");
+		};
+	}
+	
+	function testHappy() {
+		console.log("happy");
+		warudoSocket.send(JSON.stringify({action:"AIExpressions",data:10}));
+	}
+	
+	function testNeutral() {
+		console.log("neutral");
+		warudoSocket.send(JSON.stringify({action:"AIExpressions",data:5}));
+	}
+	
+	function testSad() {
+		console.log("sad");
+		warudoSocket.send(JSON.stringify({action:"AIExpressions",data:0}));
+	}
+	
+	connect();
+</script>
+</html>
